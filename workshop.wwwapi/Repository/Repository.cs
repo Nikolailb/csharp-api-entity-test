@@ -53,7 +53,7 @@ namespace workshop.wwwapi.Repository
         public async Task<T> GetWithIncludes(U id, params Func<IQueryable<T>, IQueryable<T>>[] includeChains)
         {
             IQueryable<T> query = GetIncludeTable(includeChains);
-            T? entity = await query.FirstOrDefaultAsync(e => EF.Property<U>(e, "EntityKey").Equals(id));
+            T? entity = await query.FirstOrDefaultAsync(e => EF.Property<U>(e, "Id").Equals(id));
             return entity ?? throw new IdNotFoundException($"That ID does not exist for {typeof(T).Name}");
         }
 

@@ -42,7 +42,7 @@ namespace workshop.wwwapi.Endpoints
                     Quantity = entity.Quantity,
                     Medicines = [medicine]
                 });
-                prescription = await repository.FindWithIncludes(p => p.Id == prescription.Id,
+                prescription = await repository.GetWithIncludes(prescription.Id,
                     q => q.Include(x => x.Appointment).ThenInclude(x => x.Doctor),
                     q => q.Include(x => x.Appointment).ThenInclude(x => x.Patient)
                 );
