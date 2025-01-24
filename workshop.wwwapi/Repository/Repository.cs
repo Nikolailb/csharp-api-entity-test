@@ -1,27 +1,81 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using workshop.wwwapi.Data;
+using workshop.wwwapi.Exceptions;
 using workshop.wwwapi.Models;
 
 namespace workshop.wwwapi.Repository
 {
-    public class Repository : IRepository
+    public class Repository<T, U> : IRepository<T, U>
+        where T : class
+        where U : struct
     {
-        private DatabaseContext _databaseContext;
-        public Repository(DatabaseContext db)
+        private DataContext _db;
+        private DbSet<T> _table = null!;
+        public Repository(DataContext db)
         {
-            _databaseContext = db;
+            _db = db;
+            _table = _db.Set<T>();
         }
-        public async Task<IEnumerable<Patient>> GetPatients()
+
+        public async Task<T> Add(T entity)
         {
-            return await _databaseContext.Patients.ToListAsync();
+            await _table.AddAsync(entity);
+            await _db.SaveChangesAsync();
+            return entity;
         }
-        public async Task<IEnumerable<Doctor>> GetDoctors()
+
+        public async Task<T> Delete(U id)
         {
-            return await _databaseContext.Doctors.ToListAsync();
+            T entity = await Get(id);
+            _table.Remove(entity);
+            await _db.SaveChangesAsync();
+            return entity;
         }
-        public async Task<IEnumerable<Appointment>> GetAppointmentsByDoctor(int id)
+
+        public async Task<T> Get(U id)
         {
-            return await _databaseContext.Appointments.Where(a => a.DoctorId==id).ToListAsync();
+            T? entity = await _table.FindAsync(id);
+            return entity ?? throw new IdNotFoundException($"That ID does not exist for {typeof(T).Name}");
+        }
+
+        public async Task<IEnumerable<T>> GetAll()
+        {
+            return await _table.ToListAsync();
+        }
+
+        public async Task<IEnumerable<T>> GetAllWithIncludes(params Func<IQueryable<T>, IQueryable<T>>[] includeChains)
+        {
+            IQueryable<T> query = _table;
+            foreach (var includeChain in includeChains)
+            {
+                query = includeChain(query);
+            }
+            return await query.ToListAsync();
+        }
+
+        public async Task<T> GetWithIncludes(U id, params Func<IQueryable<T>, IQueryable<T>>[] includeChains)
+        {
+            IQueryable<T> query = _table;
+            foreach (var includeChain in includeChains)
+            {
+                query = includeChain(query);
+            }
+            T? entity = await query.FirstOrDefaultAsync(e => EF.Property<U>(e, "EntityKey").Equals(id));
+            return entity ?? throw new IdNotFoundException($"That ID does not exist for {typeof(T).Name}");
+        }
+
+        public async Task Save()
+        {
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<T> Update(T entity)
+        {
+            _table.Attach(entity);
+            _db.Entry(entity).State = EntityState.Modified;
+            await _db.SaveChangesAsync();
+            return entity;
         }
     }
 }
