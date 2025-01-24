@@ -14,11 +14,22 @@ namespace workshop.wwwapi.Tools
             CreateMap<Patient, PatientView>();
             CreateMap<Patient, PatientInternal>();
 
-            CreateMap<Appointment, AppointmentView>();
-            CreateMap<Appointment, AppointmentInternal>();
-            CreateMap<Appointment, AppointmentPatient>();
-            CreateMap<Appointment, AppointmentDoctor>();
+            CreateMap<Appointment, AppointmentView>().ForMember(dest => dest.AppointmentType,
+                   opt => opt.MapFrom(src => src.AppointmentType.ToString())); ;
+            CreateMap<Appointment, AppointmentInternal>().ForMember(dest => dest.AppointmentType,
+                   opt => opt.MapFrom(src => src.AppointmentType.ToString())); ;
+            CreateMap<Appointment, AppointmentPatient>().ForMember(dest => dest.AppointmentType,
+                   opt => opt.MapFrom(src => src.AppointmentType.ToString())); ;
+            CreateMap<Appointment, AppointmentDoctor>().ForMember(dest => dest.AppointmentType,
+                   opt => opt.MapFrom(src => src.AppointmentType.ToString())); ;
+            CreateMap<Appointment, AppointmentDoctorPatient>().ForMember(dest => dest.AppointmentType,
+                opt => opt.MapFrom(src => src.AppointmentType.ToString())); ;
 
+            CreateMap<Prescription, PrescriptionView>();
+            CreateMap<Prescription, PrescriptionInternal>();
+
+            CreateMap<Medicine, MedicineView>();
+            CreateMap<Medicine, MedicineInternal>();
         }
     }
 }

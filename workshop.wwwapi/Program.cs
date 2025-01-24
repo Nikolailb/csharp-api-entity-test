@@ -48,6 +48,8 @@ app.UseHttpsRedirection();
 app.ConfigureDoctorsEndpoints();
 app.ConfigureAppointmentEndpoints();
 app.ConfigurePatientsEndpoints();
+app.ConfigurePrescriptionsEndpoints();
+app.ConfigureMedicinesEndpoints();
 
 app.Run();
 

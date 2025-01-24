@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using workshop.wwwapi.DTO;
+using workshop.wwwapi.Enums;
 using workshop.wwwapi.Exceptions;
 using workshop.wwwapi.Models;
 using workshop.wwwapi.Repository;
@@ -35,8 +36,14 @@ namespace workshop.wwwapi.Endpoints
             {
                 Doctor doctor = await doctorRepository.Get(entity.DoctorId);
                 Patient patient = await patientRepository.Get(entity.PatientId);
+                AppointmentType appointmentType;
+                if (!Enum.TryParse(entity.AppointmentType, true, out appointmentType))
+                {
+                    return TypedResults.Problem($"That is not a valid appointment type! Choose one of {string.Join(", ", Enum.GetValues<AppointmentType>())}");
+                }
                 Appointment appointment = await appointmentRepository.Add(new Appointment
                 {
+                    AppointmentType = appointmentType,
                     Booking = DateTime.UtcNow.AddDays(entity.DaysTilBooking),
                     DoctorId = doctor.Id,
                     PatientId = patient.Id,
@@ -47,7 +54,7 @@ namespace workshop.wwwapi.Endpoints
             {
                 return TypedResults.NotFound(new { ex.Message });
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 return TypedResults.Problem("A booking between those two already exists!");
             }
