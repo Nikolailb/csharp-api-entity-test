@@ -28,6 +28,9 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 builder.Services.AddScoped<IRepository<Patient, int>, Repository<Patient, int>>();
 builder.Services.AddScoped<IRepository<Doctor, int>, Repository<Doctor, int>>();
+builder.Services.AddScoped<IRepository<Appointment, int>, Repository<Appointment, int>>();
+builder.Services.AddScoped<IRepository<Medicine, int>, Repository<Medicine, int>>();
+builder.Services.AddScoped<IRepository<Prescription, int>, Repository<Prescription, int>>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
@@ -43,6 +46,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.ConfigureDoctorsEndpoints();
+app.ConfigureAppointmentEndpoints();
+app.ConfigurePatientsEndpoints();
 
 app.Run();
 

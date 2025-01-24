@@ -11,13 +11,14 @@ namespace workshop.wwwapi.Tools
             CreateMap<Doctor, DoctorView>();
             CreateMap<Doctor, DoctorInternal>();
 
+            CreateMap<Patient, PatientView>();
+            CreateMap<Patient, PatientInternal>();
+
             CreateMap<Appointment, AppointmentView>();
             CreateMap<Appointment, AppointmentInternal>();
             CreateMap<Appointment, AppointmentPatient>();
-            CreateMap<Appointment, AppointmentPatientDoctor>();
+            CreateMap<Appointment, AppointmentDoctor>();
 
-            CreateMap<Patient, PatientView>();
-            CreateMap<Patient, PatientInternal>();
         }
     }
 }

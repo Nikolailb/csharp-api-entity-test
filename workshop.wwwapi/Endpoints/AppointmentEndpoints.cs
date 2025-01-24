@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using workshop.wwwapi.DTO;
 using workshop.wwwapi.Exceptions;
@@ -15,36 +16,40 @@ namespace workshop.wwwapi.Endpoints
         {
             var group = app.MapGroup(Path);
 
-            group.MapPost("/", CreateDoctor);
-            group.MapGet("/", GetDoctors);
-            group.MapGet("/{id}", GetDcotor);
+            group.MapPost("/", CreateAppointment);
+            group.MapGet("/", GetAppointments);
+            group.MapGet("/{doctorId}/{patientId}", GetAppointment);
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> CreateDoctor(IRepository<Doctor, int> repository, DoctorPost entity)
+        public static async Task<IResult> CreateAppointment(
+            IRepository<Appointment, int> appointmentRepository,
+            IRepository<Doctor, int> doctorRepository,
+            IRepository<Patient, int> patientRepository,
+            IMapper mapper,
+            AppointmentPost entity)
         {
             try
             {
-                Doctor doctor = await repository.Add(new Doctor
+                Doctor doctor = await doctorRepository.Get(entity.DoctorId);
+                Patient patient = await patientRepository.Get(entity.PatientId);
+                Appointment appointment = await appointmentRepository.Add(new Appointment
                 {
-                    FirstName = entity.FirstName,
-                    LastName = entity.LastName,
+                    Booking = DateTime.UtcNow.AddDays(entity.DaysTilBooking),
+                    DoctorId = doctor.Id,
+                    PatientId = patient.Id,
                 });
-                return TypedResults.Created($"/{Path}/{doctor.Id}", new DoctorView(
-                    doctor.Id,
-                    doctor.FullName,
-                    doctor.Appointments.Select(a =>
-                        new AppointmentPatient(
-                            a.Booking,
-                            new PatientInternal(
-                                a.Patient.Id,
-                                a.Patient.FullName
-                            )
-                        )
-                    )
-                ));
+                return TypedResults.Created($"/{Path}", mapper.Map<AppointmentView>(appointment));
+            }
+            catch (IdNotFoundException ex)
+            {
+                return TypedResults.NotFound(new { ex.Message });
+            }
+            catch (DbUpdateException ex)
+            {
+                return TypedResults.Problem("A booking between those two already exists!");
             }
             catch (Exception ex)
             {
@@ -54,25 +59,31 @@ namespace workshop.wwwapi.Endpoints
 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public static async Task<IResult> GetDoctors(IRepository<Doctor, int> repository)
+        public static async Task<IResult> GetAppointments(
+            IRepository<Appointment, int> repository, 
+            IMapper mapper,
+            string? doctorId,
+            string? patientId)
         {
             try
             {
-                IEnumerable<Doctor> doctors = await repository.GetAllWithIncludes(
-                    q => q.Include(x => x.Appointments).ThenInclude(x => x.Patient)
+                IEnumerable<Appointment> appointments = await repository.GetAllWithIncludes(
+                    q => q.Include(x => x.Doctor),
+                    q => q.Include(x => x.Patient)
                 );
-                return TypedResults.Ok(doctors.Select(d => new DoctorView(
-                        d.Id,
-                        d.FullName,
-                        d.Appointments.Select(appointment => new AppointmentPatient(
-                            appointment.Booking,
-                            new PatientInternal(
-                                appointment.Patient.Id,
-                                appointment.Patient.FullName
-                            )
-                        ))
-                    )
-                ));
+                if (!string.IsNullOrEmpty(doctorId))
+                {
+                    int id;
+                    if (!int.TryParse(doctorId, out id)) TypedResults.Problem("The doctorId must be of type int!");
+                    appointments = appointments.Where(a => a.DoctorId == id);
+                }
+                if (!string.IsNullOrEmpty(patientId))
+                {
+                    int id;
+                    if (!int.TryParse(patientId, out id)) TypedResults.Problem("The patientId must be of type int!");
+                    appointments = appointments.Where(a => a.PatientId == id);
+                }
+                return TypedResults.Ok(mapper.Map<List<AppointmentView>>(appointments));
             }
             catch (Exception ex)
             {
@@ -83,22 +94,20 @@ namespace workshop.wwwapi.Endpoints
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> GetDcotor(IRepository<Doctor, int> repository, int id)
+        public static async Task<IResult> GetAppointment(
+            IRepository<Appointment, int> repository,
+            IMapper mapper,
+            int doctorId,
+            int patientId)
         {
             try
             {
-                Doctor doctor = await repository.Get(id);
-                return TypedResults.Ok(new DoctorView(
-                    doctor.Id,
-                    doctor.FullName,
-                    doctor.Appointments.Select(appointment => new AppointmentPatient(
-                        appointment.Booking,
-                        new PatientInternal(
-                            appointment.Patient.Id,
-                            appointment.Patient.FullName
-                        )
-                    ))
-                ));
+                Appointment appointment = await repository.FindWithIncludes(
+                    a => a.PatientId == patientId && a.DoctorId == doctorId,
+                    q => q.Include(a => a.Doctor),
+                    q => q.Include(a => a.Patient)
+                );
+                return TypedResults.Ok(mapper.Map<AppointmentView>(appointment));
             }
             catch (IdNotFoundException ex)
             {

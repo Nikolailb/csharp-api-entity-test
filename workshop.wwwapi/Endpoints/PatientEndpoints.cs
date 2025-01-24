@@ -8,32 +8,32 @@ using workshop.wwwapi.Repository;
 
 namespace workshop.wwwapi.Endpoints
 {
-    public static class DoctorEndpoints
+    public static class PatientEndpoints
     {
-        public static string Path { get; private set; } = "doctors";
+        public static string Path { get; private set; } = "patients";
 
-        public static void ConfigureDoctorsEndpoints(this WebApplication app)
+        public static void ConfigurePatientsEndpoints(this WebApplication app)
         {
             var group = app.MapGroup(Path);
 
-            group.MapPost("/", CreateDoctor);
-            group.MapGet("/", GetDoctors);
-            group.MapGet("/{id}", GetDoctor);
+            group.MapPost("/", CreatePatient);
+            group.MapGet("/", GetPatients);
+            group.MapGet("/{id}", GetPatient);
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> CreateDoctor(IRepository<Doctor, int> repository, IMapper mapper, DoctorPost entity)
+        public static async Task<IResult> CreatePatient(IRepository<Patient, int> repository, IMapper mapper, PatientPost entity)
         {
             try
             {
-                Doctor doctor = await repository.Add(new Doctor
+                Patient patient = await repository.Add(new Patient
                 {
                     FirstName = entity.FirstName,
                     LastName = entity.LastName,
                 });
-                return TypedResults.Created($"/{Path}/{doctor.Id}", mapper.Map<DoctorView>(doctor));
+                return TypedResults.Created($"/{Path}/{patient.Id}", mapper.Map<PatientView>(patient));
             }
             catch (Exception ex)
             {
@@ -43,14 +43,14 @@ namespace workshop.wwwapi.Endpoints
 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public static async Task<IResult> GetDoctors(IRepository<Doctor, int> repository, IMapper mapper)
+        public static async Task<IResult> GetPatients(IRepository<Patient, int> repository, IMapper mapper)
         {
             try
             {
-                IEnumerable<Doctor> doctors = await repository.GetAllWithIncludes(
-                    q => q.Include(x => x.Appointments).ThenInclude(x => x.Patient)
+                IEnumerable<Patient> patients = await repository.GetAllWithIncludes(
+                    q => q.Include(x => x.Appointments).ThenInclude(x => x.Doctor)
                 );
-                return TypedResults.Ok(mapper.Map<List<DoctorView>>(doctors));
+                return TypedResults.Ok(mapper.Map<List<PatientView>>(patients));
             }
             catch (Exception ex)
             {
@@ -61,12 +61,12 @@ namespace workshop.wwwapi.Endpoints
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> GetDoctor(IRepository<Doctor, int> repository, IMapper mapper, int id)
+        public static async Task<IResult> GetPatient(IRepository<Patient, int> repository, IMapper mapper, int id)
         {
             try
             {
-                Doctor doctor = await repository.FindWithIncludes((d => d.Id == id), q => q.Include(x => x.Appointments).ThenInclude(x => x.Patient));
-                return TypedResults.Ok(mapper.Map<DoctorView>(doctor));
+                Patient patient = await repository.FindWithIncludes((p => p.Id == id), q => q.Include(x => x.Appointments).ThenInclude(x => x.Doctor));
+                return TypedResults.Ok(mapper.Map<PatientView>(patient));
             }
             catch (IdNotFoundException ex)
             {

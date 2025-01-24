@@ -18,5 +18,7 @@ namespace workshop.wwwapi.Repository
         Task<T> Update(T entity);
         Task<T> Delete(U id);
         Task Save();
+        Task<T> Find(Expression<Func<T, bool>> condition);
+        Task<T> FindWithIncludes(Expression<Func<T, bool>> condition, params Func<IQueryable<T>, IQueryable<T>>[] includeChains);
     }
 }
