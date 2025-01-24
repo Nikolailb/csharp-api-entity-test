@@ -13,12 +13,12 @@ using workshop.wwwapi.Models;
 
 namespace workshop.tests;
 
-public class PatientTests
+public class PatientTest
 {
     private Seeder _seeder;
     private HttpClient _client;
     private Func<Task>? _postTestAction;
-    public PatientTests()
+    public PatientTest()
     {
         _seeder = new Seeder();
     }

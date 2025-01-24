@@ -34,10 +34,9 @@ namespace workshop.tests.Tools
         {
             if (obj1 == null || obj2 == null)
             {
-                return obj1 == obj2; // If both are null, they are equal; otherwise not
+                return obj1 == obj2;
             }
 
-            // Check if they are the same reference (optimization)
             if (ReferenceEquals(obj1, obj2)) return true;
 
             var properties = typeof(T).GetProperties();
@@ -47,30 +46,27 @@ namespace workshop.tests.Tools
                 var value1 = property.GetValue(obj1);
                 var value2 = property.GetValue(obj2);
 
-                // If the property is a class (excluding string), perform recursive comparison
                 if (value1 != null && value2 != null && property.PropertyType.IsClass && property.PropertyType != typeof(string))
                 {
-                    if (!Compare(value1, value2)) // Recursive comparison for nested objects
+                    if (!Compare(value1, value2))
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    // For primitive types or value types, use default equality check
                     if (value1 == null && value2 == null)
                     {
-                        continue; // If both are null, consider them equal
+                        continue;
                     }
 
-                    if (value1 == null || value2 == null || !Equals(value1, value2)) // Use Object.Equals for null-safe comparison
+                    if (value1 == null || value2 == null || !Equals(value1, value2))
                     {
                         return false;
                     }
                 }
             }
-
-            return true; // If no differences found, the objects are considered equal
+            return true; 
         }
     }
 }

@@ -21,8 +21,8 @@ namespace workshop.wwwapi.Endpoints
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> CreatePrescription(
             IRepository<Prescription, int> repository,
             IRepository<Appointment, int> appointmentRepository,
@@ -47,6 +47,9 @@ namespace workshop.wwwapi.Endpoints
                     q => q.Include(x => x.Appointment).ThenInclude(x => x.Patient)
                 );
                 return TypedResults.Created($"/{Path}", mapper.Map<PrescriptionView>(prescription));
+            } catch (IdNotFoundException ex)
+            {
+                return TypedResults.NotFound(new { ex.Message });
             }
             catch (Exception ex)
             {
@@ -55,7 +58,7 @@ namespace workshop.wwwapi.Endpoints
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> GetPrescriptions(IRepository<Prescription, int> repository, IMapper mapper)
         {
             try

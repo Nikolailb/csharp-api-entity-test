@@ -22,8 +22,7 @@ namespace workshop.wwwapi.Endpoints
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> CreateDoctor(IRepository<Doctor, int> repository, IMapper mapper, DoctorPost entity)
         {
             try
@@ -42,7 +41,7 @@ namespace workshop.wwwapi.Endpoints
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> GetDoctors(IRepository<Doctor, int> repository, IMapper mapper)
         {
             try
@@ -59,8 +58,8 @@ namespace workshop.wwwapi.Endpoints
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> GetDoctor(IRepository<Doctor, int> repository, IMapper mapper, int id)
         {
             try

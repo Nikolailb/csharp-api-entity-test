@@ -25,6 +25,7 @@ namespace workshop.wwwapi.Endpoints
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> CreateAppointment(
             IRepository<Appointment, int> appointmentRepository,
             IRepository<Doctor, int> doctorRepository,
@@ -39,7 +40,7 @@ namespace workshop.wwwapi.Endpoints
                 AppointmentType appointmentType;
                 if (!Enum.TryParse(entity.AppointmentType, true, out appointmentType))
                 {
-                    return TypedResults.Problem($"That is not a valid appointment type! Choose one of {string.Join(", ", Enum.GetValues<AppointmentType>())}");
+                    return TypedResults.BadRequest($"That is not a valid appointment type! Choose one of {string.Join(", ", Enum.GetValues<AppointmentType>())}");
                 }
                 Appointment appointment = await appointmentRepository.Add(new Appointment
                 {
@@ -56,7 +57,7 @@ namespace workshop.wwwapi.Endpoints
             }
             catch (DbUpdateException)
             {
-                return TypedResults.Problem("A booking between those two already exists!");
+                return TypedResults.BadRequest("A booking between those two already exists!");
             }
             catch (Exception ex)
             {
@@ -66,6 +67,7 @@ namespace workshop.wwwapi.Endpoints
 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static async Task<IResult> GetAppointments(
             IRepository<Appointment, int> repository, 
             IMapper mapper,
@@ -81,13 +83,13 @@ namespace workshop.wwwapi.Endpoints
                 if (!string.IsNullOrEmpty(doctorId))
                 {
                     int id;
-                    if (!int.TryParse(doctorId, out id)) TypedResults.Problem("The doctorId must be of type int!");
+                    if (!int.TryParse(doctorId, out id)) return TypedResults.BadRequest("The doctorId must be of type int!");
                     appointments = appointments.Where(a => a.DoctorId == id);
                 }
                 if (!string.IsNullOrEmpty(patientId))
                 {
                     int id;
-                    if (!int.TryParse(patientId, out id)) TypedResults.Problem("The patientId must be of type int!");
+                    if (!int.TryParse(patientId, out id)) return TypedResults.BadRequest("The patientId must be of type int!");
                     appointments = appointments.Where(a => a.PatientId == id);
                 }
                 return TypedResults.Ok(mapper.Map<List<AppointmentView>>(appointments));
@@ -99,8 +101,9 @@ namespace workshop.wwwapi.Endpoints
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
         public static async Task<IResult> GetAppointment(
             IRepository<Appointment, int> repository,
             IMapper mapper,
